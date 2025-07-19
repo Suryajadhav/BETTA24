@@ -1,0 +1,50 @@
+name: Django CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main  # This triggers the pipeline for push to the 'main' branch.
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # This will run the job on the latest Ubuntu
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2  # This checks out the repo
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2  # This sets up Docker Buildx
+
+      - name: Cache Docker layers
+        uses: actions/cache@v2  # This caches the Docker layers to speed up builds
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
+      - name: Build Docker image
+        run: |
+          docker build -t myproject .  # This builds the Docker image
+
+      - name: Run tests
+        run: |
+          docker run --rm myproject python manage.py test  # This runs the tests
+
+  deploy:
+    needs: build  # This job runs after the build job finishes
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.heroku.outputs.app-url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Deploy to Heroku
+        uses: akshnz/heroku-docker-deploy@v1  # This GitHub action will deploy to Heroku
+        with:
+          heroku_app_name: your-heroku-app-name  # Replace with your Heroku app name
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}  # Your Heroku API Key stored as a secret
