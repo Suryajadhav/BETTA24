@@ -3,10 +3,10 @@ services:
     name: django-app
     env: docker
     plan: free
+    # branch: master  # 👈 Important!
     autoDeploy: true
-    healthCheckPath: /
-    dockerContext: .
     dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: project.settings
